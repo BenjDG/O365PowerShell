@@ -1,0 +1,102 @@
+
+
+
+$localFilePath1="C:\Office365Logs\unlicensedUsers$(Get-Date -f yyyy-MM-dd-hh-mm).txt"
+
+
+
+
+##########################
+#finished stuff
+
+Write-Host "`n`n`n`n`nPlease input your Office 365 credentials  `n`n`n`n"
+
+Connect-MsolService
+
+Get-MsolUser -UnlicensedUsersOnly
+
+
+$confirmation = Read-Host "`n`n`n`n`nDid you verify that the UPN's are correct? `n`n`n`n`nAre you Sure You Want To Proceed? (y or n)"
+if ($confirmation -eq 'y') 
+{
+
+Write-Host "3"
+Start-Sleep -s 1
+Write-Host "2"
+Start-Sleep -s 1
+Write-Host "1"
+Start-Sleep -s 1
+Write-Host "Starting!"
+
+#Logging###############
+
+Get-MsolUser -UnlicensedUsersOnly >> $localFilePath1
+
+Get-MsolUser -UnlicensedUsersOnly >> "***FilePath***"
+
+Write-Host "Unlicensed Users have been logged in ***File Path***"
+
+Start-Sleep -s 2
+
+Write-Host "Here comes the e-mail!!!!!!"
+
+Start-Sleep -s 2
+
+#Email#########
+
+$messageParameters = @{                        
+                Subject = "After dirsync report for - $((Get-Date)) " + "Don't forget to migrate mailboxes!"                        
+                Body = Get-msoluser -UnlicensedUsersOnly |  
+                    Format-List UserPrincipalName  |                         
+                    Out-String       
+                From = "noreply@someemail.edu"                        
+                To = "***Some E-mail***"                        
+                SmtpServer = "***E-mail Server***"                        
+            }                        
+  
+Send-MailMessage @messageParameters
+
+
+               <# $ServicePlans = Get-MsolAccountSku | Where {$_.SkuPartNumber -eq "STANDARDWOFFPACK_IW_STUDENT"}
+                $ServicePlans
+
+                $ServicePlans.ServiceStatus
+
+                Get-MsolAccountSku
+                #>
+
+#Licenseing#######################
+
+Write-Host "E-mail is in the mail!"
+
+Start-Sleep -s 2
+
+$StudentNoLyncSku = New-MsolLicenseOptions -AccountSkuId ***********:STANDARDWOFFPACK_IW_STUDENT -DisabledPlans MCOSTANDARD
+                
+                #$StudentNoLyncSku
+
+$AccountSkuId = "****ACCOUNTSKU****:STANDARDWOFFPACK_IW_STUDENT"
+
+$UsageLocation = "US"
+                
+$unlicensedUsers = Get-MsolUser -UnlicensedUsersOnly
+
+$unlicensedUsers | ForEach-Object {
+
+                                Set-MsolUser -UserPrincipalName $_.UserPrincipalName -UsageLocation $UsageLocation
+
+                               Set-MsolUserLicense -UserPrincipalName $_.UserPrincipalName -AddLicenses $AccountSkuId -LicenseOptions $StudentNoLyncSku
+
+                               Set-MsolUserPrincipalName -ObjectId $_.ObjectId -NewUserPrincipalName ($_.UserPrincipalName.Split(“@”)[0] + “@***Domain***”)
+
+ <# Alluser group #>           Add-MsolGroupMember -GroupObjectId *** -GroupMemberType User -GroupMemberObjectId $_.ObjectId
+
+ <# Current Student group#>    Add-MsolGroupMember -GroupObjectId ***  -GroupMemberType User -GroupMemberObjectId $_.ObjectId
+                               
+                               }
+
+
+Write-Host "Ding fries are done!"
+Write-Host "Don't forget to migrate mailboxes!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+Start-Sleep -s 10
+}
